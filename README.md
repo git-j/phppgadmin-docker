@@ -65,3 +65,41 @@ Stopping a running container is possible via the docker api. If only one instanc
 
 	$ sudo docker stop `sudo docker ps |grep jacksoncage/phppgadmin |cut -d\  -f1`
 
+### Use with docker-compose
+
+clone this repository in admin/phppgadmin path relative to docker-compose.yml
+
+To use the image with docker-compose adapt the following to your yml file:
+
+The database-server
+
+	datastore:
+  	  image: postgres
+  	  environment:
+    	    POSTGRES_PASSWORD: secret
+    	    POSTGRES_USER: documentation
+    	  volumes:
+    	    - data/data:/var/lib/postgresql/data
+
+The database-using application
+
+	dbapp:
+          image: drupal
+        links:
+          - datastore:store
+        volumes:
+          - data/files:/var/www/
+
+The administrative database tool (phppgadmin)
+
+	documentationstoreadmin:
+	  build: admin/phppgadmin
+	  environment:
+	    POSTGRES_HOST: store
+	    POSTGRES_DEFAULTDB: documentation
+	  links:
+	    - documentationstore:store
+	  ports:
+	    - "180:80"
+
+Now you can use docker-compose to run the environment. Be aware that exposing port 180 on a production system is not a good practice. use nginx with htpasswd to secure the service!
